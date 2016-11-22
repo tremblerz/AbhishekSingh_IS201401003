@@ -20,6 +20,7 @@ urlpatterns = [
 	url(r'^$', include('appl.urls')),
 	url(r'^home$', include('appl.urls')),
 	url(r'^admin/', admin.site.urls),
+    url(r'^scan', include('scan.urls')),
 #	url(r'^auth/', include('login.urls', namespace='login')),
 #	url(r'^scan/', include('scan.urls')),
 ]

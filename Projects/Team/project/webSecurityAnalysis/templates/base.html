@@ -129,53 +129,122 @@
 
     <!-- Console style text animation API -->
     <script src="{% static "js/jquery.teletype.min.js"%}"></script>
-    
-    <script>
-        function validate_url(){
 
+    <script>
+        function is_valid_url(url){
+            return /^(http(s)?:\/\/)?(www\.)?[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$/.test(url);
         }
+
+        function run_scanner(url){
+            $('body').addClass("loading");
+            $('#overlay, #overlay-back').fadeIn(500);
+            document.getElementById('mainNav').style.display = "none";
+            document.getElementById('scan_status').style.display = "block";
+            $.ajax({
+                url:'scan',
+                type: 'POST',
+                data: {
+                    url: url,
+                    csrfmiddlewaretoken: "{{csrf_token}}",
+                },
+                success: function(result) {
+                    console.log(result)
+                    start_polling(result['job'])
+                }
+            });
+        }
+
+        function validate_url(url){
+            if (is_valid_url(url) == true) {
+                run_scanner(url);
+            }
+            else
+                $('#errorText').text("Please enter a valid URL");
+            return false;
+        }
+
 	    $( function() {
 	      $( '.type-text' ).each( function() {
-		var items = $( this ).attr( 'title' ) + ';' + $( this ).text();
-		$( this ).empty().attr( 'title', '' ).teletype( {
-		  text: $.map( items.split( ';' ), $.trim ),
-		  typeDelay: 40,
-		  backDelay: 20,
-		  cursor: '▋',
-		  delay: 3000,
-		  preserve: false,
-		  prefix: '[Scan Status ~]# ',
-		  loop: 0
-		} );
-	      } );
-	    } );
+		      var items = $( this ).attr( 'title' ) + ';' + $( this ).text();
+		      $( this ).empty().attr( 'title', '' ).teletype( {
+		          text: $.map( items.split( ';' ), $.trim ),
+		          typeDelay: 40,
+		          backDelay: 20,
+		          cursor: '▋',
+		          delay: 3000,
+		          preserve: false,
+		          prefix: '[Scan Status ~]# ',
+		          loop: 0
+		      });
+	      });
+	    });
 
         $('#url-input').keypress(function(e) {
             if (e.which == 13) {
                 var url;
                 url = $(this).val();
                 console.log(url);
-                validate_url(url);
+                if (validate_url(url))
+                    run_scanner();
                 return false;
             }
         });
 
         $('button#scan-button').click(function(){
-
-            //$('body').addClass("loading");
-            //$('#overlay, #overlay-back').fadeIn(500);
-            //document.getElementById('mainNav').style.display = "none";
-            //document.getElementById('scan_status').style.display = "block";
             var url;
             url = $('#url-input').val();
             console.log(url);
-            validate_url(url);
+            if (validate_url(url))
+                run_scanner();
             return false;
-            /*$.get('/upvote/', {recommendation: recommendation}, function(data){
-               $('#like_count').html(data);
-               $('#upvote').hide();
-            });*/
         });
+
+        $('button#stop-scan').click(function(){
+            $('body').removeClass("loading");
+            $('#overlay, #overlay-back').fadeOut(100);
+            document.getElementById('mainNav').style.display = "block";
+            document.getElementById('scan_status').style.display = "none";
+        });
+
+        /* To clear any error if user is in active mode of writing URL */
+        $('#url-input').focus(function(){
+            $('#errorText').text("");
+        });
+
+        function start_polling(task_id){
+            var poll_xhr;
+            var willstop = 0;
+            var poll = function(task_id){
+                //var json_dump = "{{ data }}";
+                //var task_id = "{{task_id}}";
+                console.log(task_id);
+                poll_xhr = $.ajax({
+                    url:'scan/poll_state',
+                    type: 'POST',
+                    data: {
+                        task_id: task_id,
+                        csrfmiddlewaretoken: "{{csrf_token}}",
+                    },
+                    success: function(result) {
+                        if (result.process_percent == null || result.process_percent == undefined) {
+
+                            //willstop = 1;
+                        }
+                        else {
+                            //jQuery('.bar').css({'width': result.process_percent + '%'});
+                            //jQuery('.bar').html(result.process_percent + '%');
+                            //document.getElementById("user-count").textContent="PROCRESSING";
+                        }
+                    }
+                });
+            };
+            var refreshIntervalId = setInterval(function() {
+                poll();
+                if(willstop == 1){
+                    clearInterval(refreshIntervalId);
+                }
+            },500);
+        };
 
     </script>
 

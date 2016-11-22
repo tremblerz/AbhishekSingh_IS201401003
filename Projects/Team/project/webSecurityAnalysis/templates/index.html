@@ -37,9 +37,10 @@
 	<!-- Scanner status begin -->
 	    <div id="overlay-back"></div> 
 	    <div id="overlay">
+        <button class="pull-right btn btn-primary" id="stop-scan">Stop Scanning</button>
 		<span>
 		    <div id="scan_status" style="display:none">
-			<p class="type-text" id="scan_text" title="Hello">Scanner started</p>
+			<p class="type-text" id="scan_text" title="Scanner started">Testing for SQL Injection</p>
 		    </div>
 		</span>
 	    </div> 
@@ -58,6 +59,7 @@
 
   		<form>
     		<div class="form-group form-group-lg">
+                <p id="errorText" class="text-danger"></p>
       			<input type="text" class="form-control" id="url-input" placeholder="Enter URL of the Website">
     		</div>
 			<button type="button" class="btn btn-warning btn-lg center-block" id="scan-button">

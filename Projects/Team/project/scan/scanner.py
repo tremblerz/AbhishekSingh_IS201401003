@@ -1,10 +1,76 @@
-from bs4 import BeautifulSoup, Comment
+from .models import payLoads, fingerPrints
 import requests
+import time
+
+class ScanHandler(object):
+    #Scan class is a base class which defines common rules for all of
+
+    def __init__(self, url):
+        self.url = url
+        self.running = False
+        self.progress = 0
+        self.result = []
+
+    def run(self):
+        self.running = True
+        sqlI = SQLInjection()
+        temp_result = sqlI.scan(self.url)
+        if len(temp_result) == 0:
+            self.result = "Site might not be vulnerable to SQL injection"
+        else:
+            self.result =  temp_result
+        self.progress = 30
+        self.running = False
+
+    def report(self):
+        return self.result
+
+    #def generateReport():
+
+    #def validateURL():
+
+    #def saveResults():
+
+class SQLInjection():
+
+    def __init__ (self):
+        self.payLoadList = payLoads.objects.filter(vulnerability='SQLInjection')
+        self.fingerPrintList = fingerPrints.objects.filter(vulnerability='SQLInjection')
+        self.vulnPayLoad = []
+
+    def filter_response(self, response):
+        # Temprorily I return the string as it is
+        return response
+
+    def scan(self, url):
+        for payLoads in self.payLoadList:
+            try:
+                print(url + '?' + payLoads.payload)
+                resp = requests.get(url + payLoads.payload)
+            except requests.exceptions.RequestException as e:
+                return e
+            body = self.filter_response(resp.text)
+            for fingerPrints in self.fingerPrintList:
+                if fingerPrints.fingerPrint in body:
+                    self.vulnPayLoad.append(payLoad)
+                    break
+            #There should be some delay in sending the request to the website
+            time.sleep(5)
+        return self.vulnPayLoad
+
+class XSS():
+    def scan(self, url):
+        resp = requests.get(url + "<script>alert(\"Test\")</script>")
+        body = resp.text
+        if "<script>alert(\"Test\")</script>" in body:
+            return "Cross-Site scripting may be possible"
+        else:
+            return "Cross-Site scripting may not be possible"
 
 #Credit for the detection code for several of the checks goes to Frederik Braun and his Mozilla intern project: Garmr
 #See https://github.com/mozilla/Garmr
 #All checks created here are licensed free and open source for anyone to use or modify
-
+"""
 class HttpsCheck():
     test_name = "httpscheck"
     test_name_human = "HTTPS Check"
@@ -414,3 +480,4 @@ class InlineJsCheck():
             result_human = "This test failed for some reason. Unknown error."
         returnlist = {"test_name":self.test_name, "test_name_human":self.test_name_human, "description":self.description, "severity":self.severity, "result":result, "result_human":result_human, "raw_data":raw_data, "moreinfo":self.moreinfo}
         return returnlist
+"""
